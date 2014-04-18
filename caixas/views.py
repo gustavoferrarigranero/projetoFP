@@ -9,6 +9,8 @@ from django.shortcuts import render, HttpResponseRedirect
 from django.db.models import Q #Queries complexas
 from caixas.models import Caixa
 from pessoas.models import Pessoa
+from django.utils import formats
+from datetime import datetime
 
 def index(request):
     return render(request, 'index.html')
@@ -37,37 +39,24 @@ def caixaSalvar(request):
         caixa.descricao = request.POST.get('descricao', '').upper()
         caixa.tipo = request.POST.get('tipo').upper()
         caixa.valor = request.POST.get('valor', '')
-        caixa.data = request.POST.get('data', '')
+        date_only = datetime.strptime(request.POST.get('data',''), '%d/%m/%Y %H:%M:%S').date()
+        caixa.data = date_only
 
         caixa.save()
         
     return HttpResponseRedirect('/caixas/')
 
 def caixaPesquisar(request):
-    if request.method == 'POST':
-        textoBusca = request.POST.get('textoBusca', 'TUDO').upper()
-
-        try:
-            if textoBusca == 'TUDO':
-                caixas = Caixa.objects.all()
-            else: 
-                caixas = Caixa.objects.filter(
-                    (Q(nome__contains=textoBusca) |  
-                    Q(email__contains=textoBusca) | 
-                    Q(telefone__contains=textoBusca) | 
-                    Q(logradouro__contains=textoBusca))).order_by('-nome')  #BUSCA POR NOME OU EMAIL OU TELEFONE OU LOGRADOURO... E É ORDENADO POR NOME.
-        except:
-            caixas = []
-
-        return render(request, 'caixas/listaCaixas.html', {'caixas': caixas, 'textoBusca': textoBusca})
+    self
 
 def caixaEditar(request, pk=0):
     try:
         caixa = Caixa.objects.get(pk=pk)
+        pessoas = Pessoa.objects.all()
     except:
         return HttpResponseRedirect('/caixas/')
 
-    return render(request, 'caixas/formCaixas.html', {'caixa': caixa})
+    return render(request, 'caixas/formCaixas.html', {'caixa': caixa,'pessoas':pessoas})
 
 def caixaExcluir(request, pk=0):
     try:
